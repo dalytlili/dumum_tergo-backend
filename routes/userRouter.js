@@ -89,7 +89,7 @@ const upload = multer({
 router.post('/register', upload.single('image'), registerValidator, userRegister);
 router.post('/send-mail-verification', sendMailVerificationValidator, sendMailVerification);
 router.post('/forgot-password', passwordResetValidator, forgotPassword);
-router.post('/login', loginValidator,  loginUser);
+router.post('/login',   loginUser);
 router.get('/profile', VerifyToken, userProfile);
 router.post('/update-profile', VerifyToken, upload.single('image'), updateProfileValidator, updateProfile);
 router.post('/refresh-token', VerifyToken, refreshToken);
