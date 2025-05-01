@@ -91,7 +91,7 @@ router.post('/send-mail-verification', sendMailVerificationValidator, sendMailVe
 router.post('/forgot-password', passwordResetValidator, forgotPassword);
 router.post('/login',   loginUser);
 router.get('/profile', VerifyToken, userProfile);
-router.post('/update-profile', VerifyToken, upload.single('image'), updateProfileValidator, updateProfile);
+router.post('/update-profile', VerifyToken, upload.single('image'), updateProfile);
 router.post('/refresh-token', VerifyToken, refreshToken);
 router.get('/logout', VerifyToken, logout)
 router.post('/send-opt', optMailValidation, sendOpt)

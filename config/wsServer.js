@@ -2,7 +2,7 @@
 import { WebSocketServer } from 'ws'; // Importation corrigée
 
 // Création du serveur WebSocket
-export const wss = new WebSocketServer({ port: 8080 });
+export const wss = new WebSocketServer({ port: 8084 });
 export const clients = new Map();
 
 wss.on('connection', (ws, req) => {
