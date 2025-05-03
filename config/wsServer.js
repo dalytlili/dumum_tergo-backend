@@ -7,7 +7,7 @@ export const clients = new Map();
 
 wss.on('connection', (ws, req) => {
   // Extraction de l'ID utilisateur depuis l'URL
-  const userId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('userId');
+  const userId = new URL(req.url, `${req.headers.host}`).searchParams.get('userId');
   
   if (userId) {
     clients.set(userId, ws);
