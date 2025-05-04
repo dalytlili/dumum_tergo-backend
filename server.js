@@ -119,6 +119,6 @@ app.use(notFoundError);
 app.use(errorHandler);
 
 // Modification ici - Utilisation du serveur HTTP combiné
-httpServer.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
