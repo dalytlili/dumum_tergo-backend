@@ -1,30 +1,34 @@
-// config/wsServer.js
 import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
+import express from 'express';
 
+// Création d'une application Express pour le serveur HTTP
+const app = express();
+const server = createServer(app);
+
+// Création du serveur WebSocket en le liant au serveur HTTP
+export const wss = new WebSocketServer({ server });
 export const clients = new Map();
 
-export function setupWebSocket(server) {
-  const wss = new WebSocketServer({ server });
+wss.on('connection', (ws, req) => {
+  // Extraction de l'ID utilisateur depuis l'URL
+  const userId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('userId');
+  
+  if (userId) {
+    clients.set(userId, ws);
+    console.log(`Client connecté: ${userId}`);
+  }
 
-  wss.on('connection', (ws, req) => {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const userId = url.searchParams.get('userId');
-
+  ws.on('close', () => {
     if (userId) {
-      clients.set(userId, ws);
-      console.log(`Client connecté: ${userId}`);
+      clients.delete(userId);
+      console.log(`Client déconnecté: ${userId}`);
     }
-
-    ws.on('close', () => {
-      if (userId) {
-        clients.delete(userId);
-        console.log(`Client déconnecté: ${userId}`);
-      }
-    });
   });
-}
-// Toujours dans config/wsServer.js
-export function sendNotification(userId, message) {
+});
+
+// Fonction améliorée pour envoyer des notifications
+export const sendNotification = (userId, message) => {
   try {
     const client = clients.get(userId);
     if (client && client.readyState === client.OPEN) {
@@ -39,4 +43,7 @@ export function sendNotification(userId, message) {
     console.error('Erreur d\'envoi de notification:', error);
     return false;
   }
-}
+};
+
+// Export du serveur HTTP pour pouvoir l'utiliser avec le serveur principal
+export { server as httpServer };
