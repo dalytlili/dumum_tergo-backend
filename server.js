@@ -21,7 +21,7 @@ import { httpServer, wss } from './config/wsServer.js'; // Modification ici
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 9098;
+const PORT = process.env.PORT || 10000;
 const databaseName = 'dumum_tergo';
 
 mongoose.set('debug', true);
