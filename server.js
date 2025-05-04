@@ -16,13 +16,16 @@ import notificationRoutes from "./routes/notificationRoutes.js"
 import campingRoutes from './routes/campingRoutes.js';
 
 import { generateAccessToken, generateRefreshToken } from './controllers/userController.js';
-import { wss } from './config/wsServer.js';
+import { setupWebSocket } from './config/wsServer.js';
+import http from 'http';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 9098;
 const databaseName = 'dumum_tergo';
+const server = http.createServer(app); // 🔥 création du serveur HTTP brut
+setupWebSocket(server); // 🔌 attachement du WebSocket sur ce serveur
+const PORT = process.env.PORT || 9098;
 
 mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
