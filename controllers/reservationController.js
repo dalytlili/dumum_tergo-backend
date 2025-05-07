@@ -191,12 +191,15 @@ export const updateReservationStatus = async (req, res) => {
     reservation.status = status;
     await reservation.save();
 
+    // Déterminer le type de notification en fonction du statut
+    const notificationType = status === 'accepted' ? 'reservation_accepted' : 'reservation_rejected';
+
     // Envoyer une notification au client
-    await sendNotification(
-      reservation.user._id,
-      'User',
-      status === 'accepted' ? 'reservation_accepted' : 'reservation_rejected',
-      {
+    await Notification.create({
+      recipient: reservation.user._id,
+      recipientType: 'User',
+      type: notificationType,
+      data: {
         reservationId: reservation._id,
         car: {
           _id: reservation.car._id,
@@ -206,8 +209,9 @@ export const updateReservationStatus = async (req, res) => {
         startDate: reservation.startDate,
         endDate: reservation.endDate,
         status: status
-      }
-    );
+      },
+      read: false
+    });
 
     res.json({
       message: `Réservation ${status === 'accepted' ? 'acceptée' : 'rejetée'} avec succès`,
