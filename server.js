@@ -19,7 +19,6 @@ import usercar from './routes/carRoutes.js';
 import reservation from './routes/reservationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import campingRoutes from './routes/campingRoutes.js';
-import sortiecampingRoutes from './routes/sortiecampingRoutes.js';
 
 import { generateAccessToken, generateRefreshToken } from './controllers/userController.js';
 
@@ -76,7 +75,6 @@ app.use('/api/camping', campingRoutes);
 app.use('/api', userRoute);
 app.use('/', authRoute);
 app.use('/api/vendor', vendorRoutes);
-app.use('/api/sortiecamping', sortiecampingRoutes);
 
 // Page de paiement
 app.get('/payment/success', (req, res) => res.render('success'));
