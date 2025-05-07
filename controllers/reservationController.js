@@ -145,7 +145,7 @@ export const updateReservationStatus = async (req, res) => {
     const { status } = req.body;
     const vendor = req.vendorId;
 
-    // Vérifier que le statut est soit 'accepted' soit 'rejected'
+    // Vérification du statut
     if (status !== 'accepted' && status !== 'rejected') {
       return res.status(400).json({ error: 'Statut invalide. Doit être "accepted" ou "rejected"' });
     }
@@ -153,19 +153,17 @@ export const updateReservationStatus = async (req, res) => {
     const reservation = await Reservation.findOne({
       _id: reservationId,
       vendor: vendor
-    }).populate('car').populate('user');
+    }).populate('car').populate('user').populate('vendor');
 
     if (!reservation) {
       return res.status(404).json({ error: 'Réservation non trouvée' });
     }
 
-    // Vérifier que la réservation est encore en statut 'pending'
     if (reservation.status !== 'pending') {
       return res.status(400).json({ error: 'La réservation a déjà été traitée' });
     }
 
     if (status === 'accepted') {
-      // Vérifier à nouveau la disponibilité
       const isAvailable = await checkCarAvailability(
         reservation.car._id,
         reservation.startDate,
@@ -176,7 +174,6 @@ export const updateReservationStatus = async (req, res) => {
         return res.status(400).json({ error: 'La voiture n\'est plus disponible pour ces dates' });
       }
 
-      // Marquer la voiture comme indisponible pour ces dates
       await Car.findByIdAndUpdate(reservation.car._id, {
         $push: {
           unavailableDates: {
@@ -187,18 +184,17 @@ export const updateReservationStatus = async (req, res) => {
       });
     }
 
-    // Mettre à jour le statut de la réservation
+    // Mise à jour du statut
     reservation.status = status;
     await reservation.save();
 
-    // Déterminer le type de notification en fonction du statut
+    // Type de notification basé sur le statut
     const notificationType = status === 'accepted' ? 'reservation_accepted' : 'reservation_rejected';
 
-    // Envoyer une notification au client
-    await Notification.create({
-      recipient: reservation.user._id,
-      recipientType: 'User',
+    // Données de notification pour l'utilisateur
+    const userNotificationData = {
       type: notificationType,
+      recipientType: 'User',
       data: {
         reservationId: reservation._id,
         car: {
@@ -209,9 +205,48 @@ export const updateReservationStatus = async (req, res) => {
         startDate: reservation.startDate,
         endDate: reservation.endDate,
         status: status
-      },
+      }
+    };
+
+    // Données de notification pour le vendeur
+    const vendorNotificationData = {
+      type: notificationType,
+      recipientType: 'Vendor',
+      data: {
+        reservationId: reservation._id,
+        car: {
+          _id: reservation.car._id,
+          brand: reservation.car.brand,
+          model: reservation.car.model
+        },
+        user: {
+          _id: reservation.user._id,
+          name: reservation.user.name,
+          image: reservation.user.image
+        },
+        startDate: reservation.startDate,
+        endDate: reservation.endDate,
+        status: status,
+        isVendorNotification: true
+      }
+    };
+
+    // Création des notifications dans la base de données
+    await Notification.create({
+      recipient: reservation.user._id,
+      ...userNotificationData,
       read: false
     });
+
+    await Notification.create({
+      recipient: reservation.vendor._id,
+      ...vendorNotificationData,
+      read: false
+    });
+
+    // Envoi des notifications via WebSocket
+    await sendNotification(reservation.user._id.toString(), userNotificationData);
+    await sendNotification(reservation.vendor._id.toString(), vendorNotificationData);
 
     res.json({
       message: `Réservation ${status === 'accepted' ? 'acceptée' : 'rejetée'} avec succès`,
