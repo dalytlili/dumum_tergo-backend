@@ -1,68 +1,59 @@
+// config/wsServer.js
 import { WebSocketServer } from 'ws';
+import Notification from '../models/Notification.js'; // Assurez-vous d'importer le modèle
 
 const clients = new Map();
 
 export const initWebSocketServer = (server) => {
-  // Crée un serveur WebSocket qui gère à la fois HTTP et WebSocket
-  const wss = new WebSocketServer({ 
-    server,
-    path: '/', // Spécifie le chemin de base pour les connexions WS
-    clientTracking: false // Nous gérons nous-mêmes les clients
-  });
+  const wss = new WebSocketServer({ server });
 
-  // Gestion des connexions WebSocket
   wss.on('connection', (ws, req) => {
-    try {
-      // Extrait le userId de l'URL
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const userId = url.searchParams.get('userId');
-
-      if (!userId) {
-        console.log('❌ Connexion rejetée: userId manquant');
-        ws.close(4000, 'User ID required');
-        return;
-      }
-
-      // Stocke la connexion
-      ws.userId = userId;
+    const userId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('userId');
+    if (userId) {
       clients.set(userId, ws);
-      console.log(`✅ WebSocket connecté: ${userId}`);
-
-      // Gestion des erreurs
-      ws.on('error', (error) => {
-        console.error(`WebSocket error for ${userId}:`, error);
-      });
-
-      // Nettoyage lors de la déconnexion
-      ws.on('close', () => {
-        if (userId && clients.get(userId) === ws) {
-          clients.delete(userId);
-          console.log(`❌ WebSocket déconnecté: ${userId}`);
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la connexion WebSocket:', error);
-      ws.close(4001, 'Internal server error');
+      console.log(`Client connecté: ${userId}`);
     }
-  });
 
-  console.log('🚀 WebSocket Server ready');
+    ws.on('close', () => {
+      if (userId) {
+        clients.delete(userId);
+        console.log(`Client déconnecté: ${userId}`);
+      }
+    });
+  });
 };
 
-export const sendNotification = (userId, message) => {
+
+export const sendNotification = async (userId, message) => {
   try {
+    // 1. Enregistrer la notification dans la base de données
+    const notification = new Notification({
+      recipient: userId,
+      recipientType: message.recipientType || 'User', // Valeur par défaut
+      type: message.type,
+      data: message.data || message, // Compatibilité rétroactive
+      read: false
+    });
+
+    await notification.save();
+
+    // 2. Envoyer via WebSocket si le client est connecté
     const client = clients.get(userId);
     if (client && client.readyState === client.OPEN) {
-      client.send(JSON.stringify({
-        ...message,
-        timestamp: new Date().toISOString()
-      }));
-      return true;
+      const wsMessage = { 
+        ...message, 
+        _id: notification._id, // Inclure l'ID MongoDB
+        timestamp: new Date().toISOString() 
+      };
+      client.send(JSON.stringify(wsMessage));
+      return { success: true, notification };
     }
-    return false;
+
+    // Si le client n'est pas connecté, la notification est quand même enregistrée
+    return { success: false, notification, reason: 'User not connected' };
+
   } catch (error) {
     console.error("Erreur d'envoi de notification:", error);
-    return false;
+    throw error; // Ou retourner un objet d'erreur selon votre préférence
   }
 };
