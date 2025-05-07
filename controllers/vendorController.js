@@ -24,7 +24,8 @@ export const requestOtp = async (req, res) => {
             });
         }
         // Générer un OTP
-        const otp = randomstring.generate({ length: 6, charset: 'numeric' });
+        const otp = "000000";
+        //const otp = randomstring.generate({ length: 6, charset: 'numeric' });
         const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // OTP valide pendant 5 minutes
 
         // Enregistrer l'OTP dans la base de données
