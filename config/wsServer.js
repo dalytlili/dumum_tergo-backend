@@ -1,22 +1,37 @@
-// config/wsServer.js
 import { WebSocketServer } from 'ws';
 
 const clients = new Map();
 
 export const initWebSocketServer = (server) => {
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ noServer: true });
+
+  server.on('upgrade', (request, socket, head) => {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const userId = url.searchParams.get('userId');
+
+    if (!userId) {
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      ws.userId = userId;
+      wss.emit('connection', ws, request);
+    });
+  });
 
   wss.on('connection', (ws, req) => {
-    const userId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('userId');
+    const userId = ws.userId;
     if (userId) {
       clients.set(userId, ws);
-      console.log(`Client connecté: ${userId}`);
+      console.log(`✅ WebSocket connecté : ${userId}`);
     }
 
     ws.on('close', () => {
       if (userId) {
         clients.delete(userId);
-        console.log(`Client déconnecté: ${userId}`);
+        console.log(`❌ WebSocket déconnecté : ${userId}`);
       }
     });
   });
