@@ -1,74 +1,51 @@
-import express from "express";
-import mongoose from "mongoose";
-import morgan from "morgan";
-import cors from "cors";
+// server.js
+import express from 'express';
+import mongoose from 'mongoose';
+import morgan from 'morgan';
+import cors from 'cors';
 import dotenv from 'dotenv';
-import session from "express-session";
-import passport from "./config/passport.js";
+import session from 'express-session';
+import passport from './config/passport.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { createServer } from 'http';
+import { initWebSocketServer } from './config/wsServer.js';
 
-import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
-import userRoute from "./routes/userRouter.js";
-import authRoute from "./routes/authRouter.js";
+import { notFoundError, errorHandler } from './middlewares/error-handler.js';
+import userRoute from './routes/userRouter.js';
+import authRoute from './routes/authRouter.js';
 import vendorRoutes from './routes/vendorRoutes.js';
-import usercar from "./routes/carRoutes.js";
-import reservation from "./routes/reservationRoutes.js";
-import notificationRoutes from "./routes/notificationRoutes.js";
+import usercar from './routes/carRoutes.js';
+import reservation from './routes/reservationRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import campingRoutes from './routes/campingRoutes.js';
+import sortiecampingRoutes from './routes/sortiecampingRoutes.js';
 
 import { generateAccessToken, generateRefreshToken } from './controllers/userController.js';
-import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 9098;
 const databaseName = 'dumum_tergo';
 
 // Serveur HTTP combiné
 const httpServer = createServer(app);
 
-// WebSocket setup
-const wss = new WebSocketServer({ server: httpServer });
-const clients = new Map();
+// Initialiser WebSocket
+initWebSocketServer(httpServer);
 
-wss.on('connection', (ws, req) => {
-  const userId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('userId');
-  if (userId) {
-    clients.set(userId, ws);
-    console.log(`Client connecté: ${userId}`);
-  }
-
-  ws.on('close', () => {
-    if (userId) {
-      clients.delete(userId);
-      console.log(`Client déconnecté: ${userId}`);
-    }
-  });
-});
-
-export const sendNotification = (userId, message) => {
-  try {
-    const client = clients.get(userId);
-    if (client && client.readyState === client.OPEN) {
-      client.send(JSON.stringify({ ...message, timestamp: new Date().toISOString() }));
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error("Erreur d'envoi de notification:", error);
-    return false;
-  }
-};
-
-// Middleware / DB / Passport / Routes
+// Connexion à MongoDB
 mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
 mongoose.connect(`mongodb+srv://mohammedalitlili:mwxWZME8ju5chsDN@cluster0.xfhzvke.mongodb.net/${databaseName}`)
-  .then(() => console.log(`Connected to MongoDB database: ${databaseName}`))
-  .catch(err => console.error('MongoDB error:', err));
+  .then(() => console.log(`Connecté à la base de données MongoDB: ${databaseName}`))
+  .catch(err => console.error('Erreur MongoDB:', err));
 
+// Middleware
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -88,8 +65,8 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/images', express.static('public/images'));
+// Fichiers statiques
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Routes
 app.use('/api/cars', usercar);
@@ -99,11 +76,12 @@ app.use('/api/camping', campingRoutes);
 app.use('/api', userRoute);
 app.use('/', authRoute);
 app.use('/api/vendor', vendorRoutes);
+app.use('/api/sortiecamping', sortiecampingRoutes);
 
-// Payment page
+// Page de paiement
 app.get('/payment/success', (req, res) => res.render('success'));
 
-// Google/Facebook Auth
+// Authentification Google
 app.get('/auth/google', (req, res, next) => {
   req.logout(err => {
     if (err) return next(err);
@@ -126,6 +104,7 @@ app.get('/auth/google/callback',
     }
   });
 
+// Authentification Facebook
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
 app.get('/auth/facebook/callback',
@@ -140,10 +119,11 @@ app.get('/auth/facebook/callback',
     }
   });
 
+// Gestion des erreurs
 app.use(notFoundError);
 app.use(errorHandler);
 
 // Démarrage du serveur HTTP + WebSocket
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
 });
