@@ -3,6 +3,8 @@ import Car from '../models/Car.js';
 import User from '../models/userModel.js';
 import Vendor from '../models/vendor.js';
 import {  sendNotification } from '../config/wsServer.js';
+import Notification from '../models/Notification.js';
+
 // At the top of reservationController.js
 //import { clients } from '../config/wsServer.js';
 
@@ -104,7 +106,7 @@ export const createReservation = async (req, res) => {
       car.vendor._id.toString(),
       {
         type: 'new_reservation',
-        recipientType: 'vendor',
+        recipientType: 'Vendor', // Doit correspondre à votre enum
         data: {
           reservationId: reservation._id,
           car: {
