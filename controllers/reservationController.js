@@ -2,7 +2,7 @@ import Reservation from '../models/Reservation.js';
 import Car from '../models/Car.js';
 import User from '../models/userModel.js';
 import Vendor from '../models/vendor.js';
-import { clients, sendNotification } from '../config/wsServer.js';
+import {  sendNotification } from '../config/wsServer.js';
 // At the top of reservationController.js
 //import { clients } from '../config/wsServer.js';
 
@@ -101,26 +101,30 @@ export const createReservation = async (req, res) => {
 
     // Envoyer une notification au vendeur
     await sendNotification(
-      car.vendor._id,
-      'Vendor',
-      'new_reservation',
+      car.vendor._id.toString(),
       {
-        reservationId: reservation._id,
-        car: {
-          _id: car._id,
-          brand: car.brand,
-          model: car.model
-        },
-        user: {
-          _id: user._id,
-          name: `${user.name}`,
-          image:`${user.image}`,
-        },
-        startDate: reservation.startDate,
-        endDate: reservation.endDate,
-        totalPrice: reservation.totalPrice
+        type: 'new_reservation',
+        recipientType: 'vendor',
+        data: {
+          reservationId: reservation._id,
+          car: {
+            _id: car._id,
+            brand: car.brand,
+            model: car.model
+          },
+          user: {
+            _id: user._id,
+            name: `${user.name}`,
+            image: `${user.image}`,
+          },
+          startDate: reservation.startDate,
+          endDate: reservation.endDate,
+          totalPrice: reservation.totalPrice
+        }
       }
     );
+
+    
 
     res.status(201).json(reservation);
   } catch (error) {
@@ -131,7 +135,6 @@ export const createReservation = async (req, res) => {
     });
   }
 };
-
 
 // Accepter/refuser une réservation (pour vendeur)
 export const updateReservationStatus = async (req, res) => {
