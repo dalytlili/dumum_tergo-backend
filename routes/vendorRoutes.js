@@ -18,6 +18,8 @@ import {
 } from '../controllers/vendorController.js';
 import { WebSocketServer } from 'ws';
 import { addRating, getRatings } from '../controllers/ratingController.js';
+import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
+import cloudinary from '../config/cloudinaryConfig.js'; // Chemin vers votre config
 
 dotenv.config();
 const app = express();
