@@ -211,7 +211,7 @@ export const updateProfile = async (req, res) => {
 
         // Mettre à jour l'image si elle est fournie
         if (req.file) {
-            vendor.image = `/images/${req.file.filename}`;
+            vendor.image = `${req.file.filename}`;
         }
 
         // Vérifier si le numéro de mobile est modifié
