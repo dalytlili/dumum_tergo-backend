@@ -49,7 +49,9 @@ import { loginAdmin,
      banVendor,
      unbanVendor
      } from '../controllers/adminController.js';
-
+     import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
+     import cloudinary from '../config/cloudinaryConfig.js'; // Chemin vers votre config
+     
 // Create an Express router
 const router = express.Router();
 
@@ -57,41 +59,59 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-            cb(null, path.join(__dirname, '../public/images'));
-        } else {
-            cb(new Error('Unsupported file type'), false);
-        }
-    },
-    filename: (req, file, cb) => {
-        const name = Date.now() + '-' + file.originalname;
-        cb(null, name);
-    }
-});
 
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'user',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+      transformation: [
+        { width: 800, crop: 'limit', quality: 'auto' }, // Compression auto
+        { fetch_format: 'auto' } // Format optimal
+      ],
+      resource_type: 'image',
+      public_id: (req, file) => `item-${Date.now()}-${Math.round(Math.random() * 1E9)}` // ID unique
+    }
+  });
+  
+
+
+
+  const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+      if (/^image\/(jpe?g|png)$/.test(file.mimetype)) {
         cb(null, true);
-    } else {
-        cb(new Error('Unsupported file type'), false);
+      } else {
+        cb(new Error('Seules les images JPEG/PNG sont autorisées'), false);
+      }
+    },
+    limits: { 
+      fileSize: 5 * 1024 * 1024, // 5MB par fichier
+      files: 5 // Maximum 5 fichiers
     }
-};
-
-const upload = multer({
-    storage,
-    fileFilter
-});
+  });
+  
+  // Middleware de pré-validation
+  const validateFileSize = (req, res, next) => {
+    if (!req.files) return next();
+    
+    const oversizedFiles = req.files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      return res.status(413).json({
+        message: `Certains fichiers dépassent 5MB: ${oversizedFiles.map(f => f.originalname).join(', ')}`
+      });
+    }
+    next();
+  };
 
 // Route handlers
-router.post('/register', upload.single('image'), registerValidator, userRegister);
+router.post('/register', upload.single('image'),validateFileSize, registerValidator, userRegister);
 router.post('/send-mail-verification', sendMailVerificationValidator, sendMailVerification);
 router.post('/forgot-password', passwordResetValidator, forgotPassword);
 router.post('/login',   loginUser);
 router.get('/profile', VerifyToken, userProfile);
-router.post('/update-profile', VerifyToken, upload.single('image'), updateProfile);
+router.post('/update-profile', VerifyToken, upload.single('image'),validateFileSize, updateProfile);
 router.post('/refresh-token', VerifyToken, refreshToken);
 router.get('/logout', VerifyToken, logout)
 router.post('/send-opt', optMailValidation, sendOpt)
