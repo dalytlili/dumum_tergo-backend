@@ -33,7 +33,7 @@ const __dirname = path.dirname(__filename);
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-      folder: 'camping',
+      folder: 'vendeur',
       allowed_formats: ['jpg', 'jpeg', 'png'],
       transformation: [
         { width: 800, crop: 'limit', quality: 'auto' }, // Compression auto
