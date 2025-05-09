@@ -327,7 +327,7 @@ const userRegister = async (req, res) => {
             email,
             mobile,    
             password: hashPassword,
-            image: req.file ? `/images/${req.file.filename}` : '/images/default.png'
+            image: req.file ? `${req.file.filename}` : '/images/default.png'
         });
 
         // Save the user to the database
@@ -687,7 +687,7 @@ const updateProfile = async (req, res) => {
         const user_id = req.user._id;
 
         if (req.file) {
-            data.image = '/images/' + req.file.filename;
+            data.image =  req.file.filename;
 
             // Fetch the current user to get the old image path
             const oldUser = await User.findOne({ _id: user_id });
