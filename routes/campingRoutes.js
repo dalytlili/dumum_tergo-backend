@@ -24,41 +24,61 @@ import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 const router = express.Router();
+import cloudinary from '../config/cloudinaryConfig.js'; // Chemin vers votre config
+import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
 
 // Get the current file's directory path (__dirname)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configure Multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-            cb(null, path.join(__dirname, '../public/images'));
-        } else {
-            cb(new Error('Unsupported file type'), false);
-        }
-    },
-    filename: (req, file, cb) => {
-        const name = Date.now() + '-' + file.originalname;
-        cb(null, name);
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'camping-items',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+      transformation: [
+        { width: 800, crop: 'limit', quality: 'auto' }, // Compression auto
+        { fetch_format: 'auto' } // Format optimal
+      ],
+      resource_type: 'image',
+      public_id: (req, file) => `item-${Date.now()}-${Math.round(Math.random() * 1E9)}` // ID unique
     }
-});
+  });
+  
 
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+
+
+  const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+      if (/^image\/(jpe?g|png)$/.test(file.mimetype)) {
         cb(null, true);
-    } else {
-        cb(new Error('Unsupported file type'), false);
+      } else {
+        cb(new Error('Seules les images JPEG/PNG sont autorisées'), false);
+      }
+    },
+    limits: { 
+      fileSize: 5 * 1024 * 1024, // 5MB par fichier
+      files: 5 // Maximum 5 fichiers
     }
-};
-
-const upload = multer({
-    storage,
-    fileFilter
-});
+  });
+  
+  // Middleware de pré-validation
+  const validateFileSize = (req, res, next) => {
+    if (!req.files) return next();
+    
+    const oversizedFiles = req.files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      return res.status(413).json({
+        message: `Certains fichiers dépassent 5MB: ${oversizedFiles.map(f => f.originalname).join(', ')}`
+      });
+    }
+    next();
+  };
 
 // Routes pour les vendeurs
-router.post('/items',upload.array('images', 5),  VerifyTokenvendor, addCampingItem);
+router.post('/items',upload.array('images', 5),validateFileSize,  VerifyTokenvendor, addCampingItem);
 router.put('/items/:itemId',upload.array('images', 5), VerifyTokenvendor, updateCampingItem);
 router.delete('/items/:itemId', VerifyTokenvendor, deleteCampingItem);
 router.get('/vendor/items', VerifyTokenvendor, getVendorItems);
