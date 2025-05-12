@@ -20,17 +20,7 @@ export const registerValidator = [
         minNumbers: 1,
         minSymbols: 1
     }),
-    check('image').custom((value, { req }) => {
-        if (!req.file) {
-            throw new Error("Please upload an image (Jpeg, PNG)");
-        }
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        if (allowedTypes.includes(req.file.mimetype)) {
-            return true;
-        } else {
-            throw new Error("Please upload an image (Jpeg, PNG)");
-        }
-    })
+
 ];
 
 
