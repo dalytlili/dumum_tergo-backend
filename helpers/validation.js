@@ -4,7 +4,7 @@ import { check } from 'express-validator';
 export const registerValidator = [
    // check('name', 'Name is required!!!').notEmpty(),
   // check('name', 'name is required').not().isEmpty(),
-    check('lastname', 'Lastname is required').not().isEmpty(),
+    //check('lastname', 'Lastname is required').not().isEmpty(),
     check('email', 'Invalid email').isEmail().normalizeEmail({
         gmail_remove_dots: true
     }),
