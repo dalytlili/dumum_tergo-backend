@@ -19,6 +19,7 @@ import usercar from './routes/carRoutes.js';
 import reservation from './routes/reservationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import campingRoutes from './routes/campingRoutes.js';
+import sortiecampingRoutes from './routes/sortiecampingRoutes.js';
 
 import { generateAccessToken, generateRefreshToken } from './controllers/userController.js';
 
@@ -63,6 +64,7 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/sortiecamping', sortiecampingRoutes);
 
 // Fichiers statiques
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
