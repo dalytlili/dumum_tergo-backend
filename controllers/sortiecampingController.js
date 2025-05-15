@@ -78,6 +78,61 @@ export const getCampingEvents = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const annulerParticipationEvenement = async (req, res) => {
+  try {
+    console.log("Utilisateur authentifié :", req.user);
+
+    const { eventId } = req.params;
+    const userId = req.user._id; // L'ID de l'utilisateur authentifié
+
+    // 1. Vérifier que l'événement existe
+    const event = await Camping.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Événement non trouvé" });
+    }
+
+    // 2. Vérifier que l'utilisateur participe bien à l'événement
+    if (!event.participants || !event.participants.length) {
+      return res.status(400).json({ 
+        message: "Vous ne participez pas à cet événement",
+        code: "NOT_PARTICIPATING"
+      });
+    }
+
+    // 3. Trouver l'index de l'utilisateur dans les participants
+    const participantIndex = event.participants.findIndex(participant => 
+      participant && participant.toString() === userId.toString()
+    );
+
+    if (participantIndex === -1) {
+      return res.status(400).json({ 
+        message: "Vous ne participez pas à cet événement",
+        code: "NOT_PARTICIPATING"
+      });
+    }
+
+    // 4. Retirer l'utilisateur des participants
+    event.participants.splice(participantIndex, 1);
+    const updatedEvent = await event.save();
+
+    // 5. Retourner l'événement mis à jour
+    const populatedEvent = await Camping.findById(updatedEvent._id)
+      .populate('participants', 'username email mobile image name');
+    
+    res.status(200).json({
+      message: "Participation annulée avec succès",
+      event: populatedEvent
+    });
+
+  } catch (error) {
+    console.error("Erreur lors de l'annulation de la participation:", error);
+    
+    res.status(500).json({ 
+      message: "Erreur lors de l'annulation de la participation",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
 export const participerEvenement = async (req, res) => {
   try {
     console.log("Utilisateur authentifié :", req.user);
