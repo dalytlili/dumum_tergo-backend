@@ -56,11 +56,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+
+        following: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+    
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Experience'
+      }],
     banned_at: {
         type: Date,
         required: false
     },});
     
+    userSchema.index({ name: 'text' }); // Crée un index de type texte pour la recherche
 
 // Exporter le modèle User
 const User = mongoose.model('User', userSchema);
