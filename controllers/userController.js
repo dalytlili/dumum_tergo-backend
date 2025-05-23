@@ -13,11 +13,13 @@ import Otp from '../models/opt.js';
 import { oneMinuteExpiry, threeMinuteExpiry } from '../helpers/otpValidate.js';
 import OtpReset from '../models/OtpReset.js';
 import twilio from 'twilio';
-
+import mongoose from 'mongoose';
+import Experience from '../models/experienceModel.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export {
+    searchUsers,
     userRegister,
     mailVerification,
     sendMailVerification,
@@ -39,7 +41,9 @@ export {
     generateRefreshToken,
     generateAccessToken,
     deleteAccount,
-    changePassword
+    changePassword,
+    followUser,
+    getUserById
    
 };
 
@@ -115,7 +119,49 @@ const changePassword = async (req, res) => {
         });
     }
 };
-
+ const searchUsers = async (req, res) => {
+    try {
+        const { name, genre, role, is_banned } = req.query;
+        
+        // Construction de la requête
+        const query = {};
+        
+        if (name) {
+            query.name = { $regex: name, $options: 'i' }; // Recherche insensible à la casse
+        }
+        
+        if (genre) {
+            query.genre = genre;
+        }
+        
+        if (role) {
+            query.role = role;
+        }
+        
+        if (is_banned !== undefined) {
+            query.is_banned = is_banned === 'true';
+        }
+        
+        // Exécution de la requête (sans pagination)
+        const users = await User.find(query)
+                               .sort({ name: 1 })
+                               .select('-password -googleId -facebookId'); // Exclure les champs sensibles
+        
+        return res.status(200).json({
+            success: true,
+            data: users,
+            count: users.length
+        });
+        
+    } catch (error) {
+        console.error("Erreur lors de la recherche des utilisateurs:", error);
+        return res.status(500).json({
+            success: false,
+            msg: "Erreur serveur lors de la recherche",
+            error: error.message
+        });
+    }
+};
 // Function to delete user account
 const deleteAccount = async (req, res) => {
     try {
@@ -663,7 +709,132 @@ const userProfile = async (req, res) => {
         });
     }
 };
+const getUserById = async (req, res) => {
+    try {
+        const userId = req.params.id;
 
+        // Vérifier si l'ID est valide
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                msg: "ID utilisateur invalide",
+            });
+        }
+
+        // Récupérer les données de l'utilisateur
+        const userData = await User.findById(userId)
+            .select('-password -tokenExpiredAt') // Exclure les champs sensibles
+            .lean();
+
+        if (!userData) {
+            return res.status(404).json({
+                success: false,
+                msg: "Utilisateur non trouvé",
+            });
+        }
+
+        // Compter les expériences de l'utilisateur
+        const experienceCount = await Experience.countDocuments({ user: userId });
+
+        // Compter les abonnés et abonnements
+        const followersCount = await User.countDocuments({ following: userId });
+        const followingCount = userData.following ? userData.following.length : 0;
+
+        // Vérifier si l'utilisateur connecté suit cet utilisateur
+        let isFollowing = false;
+        if (req.user && req.user._id) {
+            const currentUser = await User.findById(req.user._id);
+            isFollowing = currentUser.following.includes(userId);
+        }
+
+        return res.status(200).json({
+            success: true,
+            msg: "User Data!",
+            data: {
+                ...userData,
+                experienceCount,
+                followersCount,
+                followingCount,
+                isFollowing
+            },
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error.message
+        });
+    }
+};
+
+// Fonction pour suivre/unfollow un utilisateur
+const followUser = async (req, res) => {
+    try {
+        const currentUserId = req.user._id;
+        const targetUserId = req.params.id;
+
+        // Vérifier si l'ID cible est valide
+        if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+            return res.status(400).json({
+                success: false,
+                msg: "ID utilisateur invalide",
+            });
+        }
+
+        // Vérifier qu'on ne peut pas se suivre soi-même
+        if (currentUserId.toString() === targetUserId) {
+            return res.status(400).json({
+                success: false,
+                msg: "Vous ne pouvez pas vous suivre vous-même",
+            });
+        }
+
+        // Vérifier que l'utilisateur cible existe
+        const targetUser = await User.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({
+                success: false,
+                msg: "Utilisateur non trouvé",
+            });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        const isFollowing = currentUser.following.includes(targetUserId);
+
+        let message = "";
+        if (isFollowing) {
+            // Retirer le follow
+            await User.findByIdAndUpdate(currentUserId, {
+                $pull: { following: targetUserId }
+            });
+            message = "Vous ne suivez plus cet utilisateur";
+        } else {
+            // Ajouter le follow
+            await User.findByIdAndUpdate(currentUserId, {
+                $addToSet: { following: targetUserId }
+            });
+            message = "Vous suivez maintenant cet utilisateur";
+        }
+
+        // Récupérer le nouveau compte de followers
+        const followersCount = await User.countDocuments({ following: targetUserId });
+
+        return res.status(200).json({
+            success: true,
+            msg: message,
+            data: {
+                isFollowing: !isFollowing,
+                followersCount
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error.message
+        });
+    }
+};
 // Function to update user profile
 const updateProfile = async (req, res) => {
     try {
