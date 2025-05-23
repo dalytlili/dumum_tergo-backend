@@ -360,7 +360,7 @@ const userRegister = async (req, res) => {
         if (isExist) {
             return res.status(400).json({
                 success: false,
-                msg: 'mobile déjà utilisé'
+                msg: 'Numéro de mobile déjà utilisé'
             });
         }
         // Hash the password
@@ -379,16 +379,39 @@ const userRegister = async (req, res) => {
         // Save the user to the database
         const userData = await newUser.save();
 
-        // Prepare email content for verification
-        const subject = 'Vérifiez votre email';
-        const content = `<p>Bonjour ${name}, veuillez <a href="http://127.0.0.1:9098/mail-verif/${userData._id}">cliquer ici</a> pour vérifier votre adresse email.</p>`;
+        // Prepare email content for verification - Personnalisé pour Dumum Tergo
+        const subject = 'Vérification de votre email - Dumum Tergo';
+        const content = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #08B783; padding: 20px; text-align: center;">
+                    <img src="https://your-logo-url.com/logo.png" alt="Dumum Tergo Logo" style="max-height: 80px;">
+                    <h1 style="color: white; margin-top: 10px;">Bienvenue chez Dumum Tergo</h1>
+                </div>
+                <div style="padding: 25px;">
+                    <h2 style="color: #08B783;">Bonjour ${name},</h2>
+                    <p>Merci de vous être inscrit à notre application de camping Dumum Tergo. Pour commencer à explorer nos services, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="https://dumum-tergo-backend.onrender.com/mail-verif/${userData._id}" 
+                           style="background-color: #08B783; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Vérifier mon email
+                        </a>
+                    </div>
+                    <p>Si vous n'avez pas créé de compte avec nous, veuillez ignorer cet email.</p>
+                    <p style="margin-top: 30px;">À bientôt sur les chemins du camping !</p>
+                    <p><strong>L'équipe Dumum Tergo</strong></p>
+                </div>
+                <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+                    © ${new Date().getFullYear()} Dumum Tergo Camping. Tous droits réservés.
+                </div>
+            </div>
+        `;
 
         // Send verification email
         await sendMail(email, subject, content);
 
         return res.status(200).json({
             success: true,
-            msg: 'Inscription réussie !',
+            msg: 'Inscription réussie ! Un email de vérification a été envoyé.',
             user: userData
         });
     } catch (error) {
