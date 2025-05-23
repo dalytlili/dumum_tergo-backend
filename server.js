@@ -20,6 +20,8 @@ import reservation from './routes/reservationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import campingRoutes from './routes/campingRoutes.js';
 import sortiecampingRoutes from './routes/sortiecampingRoutes.js';
+import experienceRoutes from './routes/experienceRoutes.js';
+
 
 import { generateAccessToken, generateRefreshToken } from './controllers/userController.js';
 
@@ -64,7 +66,6 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api/sortiecamping', sortiecampingRoutes);
 
 // Fichiers statiques
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
@@ -77,6 +78,8 @@ app.use('/api/camping', campingRoutes);
 app.use('/api', userRoute);
 app.use('/', authRoute);
 app.use('/api/vendor', vendorRoutes);
+app.use('/api/sortiecamping', sortiecampingRoutes);
+app.use('/api/experiences', experienceRoutes);
 
 // Page de paiement
 app.get('/payment/success', (req, res) => res.render('success'));
