@@ -18,7 +18,10 @@ import {
     verifyOtpPhone,
     resetPasswordP,
     deleteAccount,
-    changePassword
+    changePassword,
+    getUserById,
+    followUser,
+    searchUsers
 
 } from '../controllers/userController.js';
 import {
@@ -122,7 +125,11 @@ router.post('/reset-password', resetPasswordP);
 router.post('/send-opt', sendOtpP)
 router.delete('/delete-account', VerifyToken, deleteAccount);
 router.post('/change-password', VerifyToken, changePassword);
+router.get('/search', VerifyToken, searchUsers);
 
+// Routes
+router.get('/user/:id', VerifyToken, getUserById);
+router.post('/:id/follow', VerifyToken, followUser);
 //admin
 router.post('/login-admin', loginValidator, loginAdmin);
 router.get('/logout-admin', verifyAdmin, logoutAdmin);
