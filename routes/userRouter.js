@@ -126,6 +126,9 @@ router.post('/send-opt', sendOtpP)
 router.delete('/delete-account', VerifyToken, deleteAccount);
 router.post('/change-password', VerifyToken, changePassword);
 router.get('/search', VerifyToken, searchUsers);
+router.post('/verify-token', VerifyToken, (req, res) => {
+  res.status(200).json({ success: true, user: req.user });
+});
 
 // Routes
 router.get('/user/:id', VerifyToken, getUserById);
