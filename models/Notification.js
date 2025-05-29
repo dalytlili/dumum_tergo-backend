@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['new_reservation', 'reservation_accepted', 'reservation_rejected']
+    enum: ['new_reservation', 'reservation_accepted', 'reservation_rejected','experience_like','experience_comment']
   },
   data: {
     type: mongoose.Schema.Types.Mixed,
