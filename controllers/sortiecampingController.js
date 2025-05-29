@@ -72,7 +72,11 @@ export const createCampingEvent = async (req, res) => {
   
 export const getCampingEvents = async (req, res) => {
   try {
-    const events = await Camping.find().populate("createdBy", "name");
+    const currentDate = new Date();
+    const events = await Camping.find({ 
+      date: { $gt: currentDate }  // $gt = greater than (date > maintenant)
+    }).populate("createdBy", "name");
+    
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: error.message });
