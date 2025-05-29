@@ -1,5 +1,6 @@
 import Experience from '../models/experienceModel.js';
 import User from '../models/userModel.js';
+import {  sendNotification } from '../config/wsServer.js';
 
 // Créer une nouvelle expérience
 export const createExperience = async (req, res) => {
@@ -107,8 +108,9 @@ export const getUserExperiences = async (req, res) => {
 // Ajouter un like
 export const likeExperience = async (req, res) => {
   try {
-    const experience = await Experience.findById(req.params.id);
-
+    // 1. Récupérer l'expérience avec l'utilisateur peuplé
+    const experience = await Experience.findById(req.params.id).populate('user', '_id name');
+    
     if (!experience) {
       return res.status(404).json({
         success: false,
@@ -116,22 +118,59 @@ export const likeExperience = async (req, res) => {
       });
     }
 
-    if (experience.likes.includes(req.user._id)) {
+    // 2. Vérifier que l'utilisateur existe sur l'expérience
+    if (!experience.user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Auteur de l\'expérience introuvable'
+      });
+    }
+
+    // 3. Vérifier si l'utilisateur a déjà liké
+    if (experience.likes.some(like => like.equals(req.user._id))) {
       return res.status(400).json({
         success: false,
         message: 'Vous avez déjà aimé cette expérience'
       });
     }
 
+    // 4. Ajouter le like
     experience.likes.push(req.user._id);
     await experience.save();
 
-    res.json({
-      success: true,
-      data: experience
+    // 5. Envoyer notification seulement si l'auteur est différent de l'utilisateur actuel
+  // Dans likeExperience, modifiez la partie notification :
+if (!experience.user._id.equals(req.user._id)) {
+  try {
+    console.log('Attempting to send like notification to:', experience.user._id);
+    const notificationResult = await sendNotification(experience.user._id.toString(), {
+      type: 'experience_like',
+      recipientType: 'User', // Doit correspondre exactement à l'enum
+      data: {
+        experienceId: experience._id,
+        likedBy: req.user._id,
+        likedByUsername: req.user.name
+      },
+      message: `${req.user.name} a aimé votre expérience`
     });
+    console.log('Notification result:', notificationResult);
   } catch (error) {
-    res.status(500).json({
+    console.error('Notification error:', error);
+    // Ne pas bloquer le like à cause d'une erreur de notification
+  }
+}
+
+    return res.json({
+      success: true,
+      data: {
+        ...experience.toObject(),
+        // Ajoutez d'autres champs si nécessaire
+      }
+    });
+
+  } catch (error) {
+    console.error("Erreur dans likeExperience:", error);
+    return res.status(500).json({
       success: false,
       message: error.message
     });
@@ -174,14 +213,21 @@ export const unlikeExperience = async (req, res) => {
   }
 };
 
-
-// Ajouter un commentaire
 export const addComment = async (req, res) => {
   try {
     const { text } = req.body;
     console.log('Corps de la requête:', req.body); // Pour débogage
 
-    const experience = await Experience.findById(req.params.id);
+    const experience = await Experience.findById(req.params.id).populate('user', '_id name');
+
+    if (!experience) {
+      return res.status(404).json({
+        success: false,
+        message: 'Expérience non trouvée'
+      });
+    }
+
+    // Ajouter le commentaire
     experience.comments.push({
       user: req.user._id,
       text
@@ -189,17 +235,39 @@ export const addComment = async (req, res) => {
 
     await experience.save();
 
-    // Correction: populate avec la bonne syntaxe
+    // Envoyer une notification à l'auteur si ce n'est pas lui qui commente
+    if (!experience.user._id.equals(req.user._id)) {
+      try {
+        console.log('Sending comment notification to:', experience.user._id);
+        const notificationResult = await sendNotification(experience.user._id.toString(), {
+          type: 'experience_comment',
+          recipientType: 'User',
+          data: {
+            experienceId: experience._id,
+            commentedBy: req.user._id,
+            commentedByUsername: req.user.name,
+            commentText: text
+          },
+          message: `${req.user.name} a commenté votre expérience`
+        });
+        console.log('Notification result:', notificationResult);
+      } catch (notificationError) {
+        console.error('Erreur lors de l\'envoi de la notification de commentaire:', notificationError);
+      }
+    }
+
+    // Retourner l'expérience peuplée
     const populatedExperience = await Experience.findById(experience._id)
       .populate({
         path: 'comments.user',
-        select: 'name image' // Sélectionne seulement name et image
+        select: 'name image'
       });
 
     res.json({
       success: true,
       data: populatedExperience
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -207,6 +275,7 @@ export const addComment = async (req, res) => {
     });
   }
 };
+
 // Mettre à jour la description d'une expérience
 export const updateExperienceDescription = async (req, res) => {
   try {
