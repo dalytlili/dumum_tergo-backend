@@ -21,11 +21,8 @@ export const createReservation = async (req, res) => {
       additionalDrivers,
       location,
       driverEmail,
-      driverFirstName,
-      driverLastName,
-      driverBirthDate,
       driverPhoneNumber,
-      driverCountry
+      documentType // 'cin' ou 'passport'
     } = req.body;
     
     const { user } = req;
@@ -35,10 +32,11 @@ export const createReservation = async (req, res) => {
     }
     const fullUser = await User.findById(user._id);
 
+
     // Vérifier la disponibilité de la voiture
     const car = await Car.findById(carId)
-    .populate('vendor')
-    .select('images brand model pricePerDay');
+      .populate('vendor')
+      .select('images brand model pricePerDay');
   
     if (!car) {
       return res.status(404).json({ error: 'Voiture non trouvée' });
@@ -47,15 +45,10 @@ export const createReservation = async (req, res) => {
     // Convertir les dates en objets Date pour vérification
     const startDateTime = new Date(startDate);
     const endDateTime = new Date(endDate);
-    const driverBirthDateTime = new Date(driverBirthDate);
 
     // Validation des données
     if (endDateTime <= startDateTime) {
       return res.status(400).json({ error: 'La date de fin doit être après la date de début' });
-    }
-
-    if (driverBirthDateTime >= new Date()) {
-      return res.status(400).json({ error: 'La date de naissance doit être dans le passé' });
     }
 
     if (!driverPhoneNumber.match(/^\+?[\d\s-]+$/)) {
@@ -65,6 +58,39 @@ export const createReservation = async (req, res) => {
     if (!driverEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       return res.status(400).json({ error: 'Email invalide' });
     }
+
+    // Vérification des documents
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'Documents manquants' });
+    }
+
+// Dans createReservation, remplacez la partie documents par :
+
+let documents = {};
+if (documentType === 'cin') {
+  if (!req.files.permisRecto || !req.files.permisVerso || !req.files.cinRecto) {
+    return res.status(400).json({ error: 'Pour CIN, vous devez fournir permis recto, verso et CIN recto' });
+  }
+  
+  documents = {
+    permisRecto: req.files.permisRecto[0].path,
+    permisVerso: req.files.permisVerso[0].path,
+    cinRecto: req.files.cinRecto[0].path,
+    cinVerso: req.files.cinVerso?.[0]?.path || '' // Optionnel
+  };
+} else if (documentType === 'passport') {
+  if (!req.files.permisRecto || !req.files.permisVerso || !req.files.passport) {
+    return res.status(400).json({ error: 'Pour passport, vous devez fournir permis recto, verso et passport' });
+  }
+  
+  documents = {
+    permisRecto: req.files.permisRecto[0].path,
+    permisVerso: req.files.permisVerso[0].path,
+    passport: req.files.passport[0].path
+  };
+} else {
+  return res.status(400).json({ error: 'Type de document invalide (doit être "cin" ou "passport")' });
+}
 
     const isAvailable = await checkCarAvailability(carId, startDate, endDate);
     if (!isAvailable) {
@@ -91,13 +117,10 @@ export const createReservation = async (req, res) => {
       childSeats: childSeats || 0,
       additionalDrivers: additionalDrivers || 0,
       location,
+      documents,
       driverDetails: {
         email: driverEmail,
-        firstName: driverFirstName,
-        lastName: driverLastName,
-        birthDate: driverBirthDateTime,
-        phoneNumber: driverPhoneNumber,
-        country: driverCountry
+        phoneNumber: driverPhoneNumber
       }
     });
 
@@ -106,7 +129,7 @@ export const createReservation = async (req, res) => {
       car.vendor._id.toString(),
       {
         type: 'new_reservation',
-        recipientType: 'Vendor', // Doit correspondre à votre enum
+        recipientType: 'Vendor',
         data: {
           reservationId: reservation._id,
           car: {
@@ -125,8 +148,6 @@ export const createReservation = async (req, res) => {
         }
       }
     );
-
-    
 
     res.status(201).json(reservation);
   } catch (error) {
