@@ -52,31 +52,36 @@ const reservationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  documents: {
+    permisRecto: {
+      type: String,
+      required: true
+    },
+    permisVerso: {
+      type: String,
+      required: true
+    },
+    cinRecto: {
+      type: String
+    },
+    cinVerso: {
+      type: String
+    },
+    passport: {
+      type: String
+    }
+  },
   driverDetails: {
     email: {
       type: String,
       required: true
     },
-    firstName: {
-      type: String,
-      required: true
-    },
-    lastName: {
-      type: String,
-      required: true
-    },
-    birthDate: {
-      type: Date,
-      required: true
-    },
+
     phoneNumber: {
       type: String,
       required: true
     },
-    country: {
-      type: String,
-      required: true
-    }
+
   }
 }, { timestamps: true });
 
