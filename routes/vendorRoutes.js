@@ -151,13 +151,13 @@ router.get('/payment/success', async (req, res) => {
             await vendor.save();
 
             // Redirection vers l'application mobile avec les paramètres nécessaires
-            return res.redirect(`dumumtergo://payment/success?vendorId=${developer_tracking_id}&paymentId=${payment_id}`);
+            return res.redirect(`https://dumum-tergo-backend.onrender.com/payment/success?vendorId=${developer_tracking_id}&paymentId=${payment_id}`);
         }
 
-        return res.redirect('dumumtergo://payment/fail');
+        return res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail');
     } catch (error) {
         console.error('Erreur succès paiement:', error);
-        return res.redirect('dumumtergo://payment/fail?error=server_error');
+        return res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail?error=server_error');
     }
 });
 
@@ -165,7 +165,7 @@ router.get('/payment/success', async (req, res) => {
 router.get('/payment/fail', (req, res) => {
     const { error } = req.query;
     const errorParam = error ? `?error=${error}` : '';
-    return res.redirect(`dumumtergo://payment/fail${errorParam}`);
+    return res.redirect(`https://dumum-tergo-backend.onrender.com/payment/fail${errorParam}`);
 });
 
 // Vérification du paiement
