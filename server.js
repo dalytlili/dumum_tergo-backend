@@ -69,6 +69,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Fichiers statiques
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.set('views', path.join(__dirname, 'views')); // Chemin correct
 
 // Routes
 app.use('/api/cars', usercar);
