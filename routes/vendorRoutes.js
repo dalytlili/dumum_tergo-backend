@@ -100,8 +100,8 @@ router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
             app_token: process.env.FLOUCI_APP_TOKEN,
             app_secret: process.env.FLOUCI_APP_SECRET,
             amount: Number(amount),
-            success_link: `http://localhost:9098/api/vendor/payment/success?developer_tracking_id=${req.vendorId}`,
-            fail_link: 'http://localhost:9098/api/vendor/payment/fail',
+            success_link: `https://dumum-tergo-backend.onrender.com/api/vendor/payment/success?developer_tracking_id=${req.vendorId}`,
+            fail_link: 'https://dumum-tergo-backend.onrender.com/api/vendor/payment/fail',
             developer_tracking_id: req.vendorId,
             session_timeout_secs: 1200,
             accept_card: true,
@@ -166,10 +166,10 @@ router.get('/payment/success', async (req, res) => {
                 }
             });
 
-            return res.redirect('http://localhost:9098/payment/success');
+            return res.redirect('https://dumum-tergo-backend.onrender.com/payment/success');
         }
 
-        return res.redirect('http://localhost:9098/payment/fail');
+        return res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail');
     } catch (error) {
         console.error('Erreur succès paiement:', error);
         return res.status(500).json({ success: false, msg: 'Erreur serveur.' });
@@ -177,7 +177,7 @@ router.get('/payment/success', async (req, res) => {
 });
 
 // Gestion de l'échec du paiement
-router.get('/payment/fail', (req, res) => res.redirect('http://localhost:9098/payment/fail'));
+router.get('/payment/fail', (req, res) => res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail'));
 
 // Vérification du paiement
 router.get('/verify-payment/:payment_id', async (req, res) => {
