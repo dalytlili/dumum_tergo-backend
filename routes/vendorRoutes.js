@@ -101,7 +101,7 @@ router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
             app_token: process.env.FLOUCI_APP_TOKEN,
             app_secret: process.env.FLOUCI_APP_SECRET,
             amount: Number(amount),
-            success_link: `dumumtergo://payment/success?developer_tracking_id=${req.vendorId}`,
+            success_link: `https://dumum-tergo-backend.onrender.com/payment/success?developer_tracking_id=${req.vendorId}`,
             fail_link: 'dumumtergo://payment/fail',
             developer_tracking_id: req.vendorId,
             session_timeout_secs: 1200,
