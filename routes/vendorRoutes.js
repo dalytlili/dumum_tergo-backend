@@ -89,7 +89,6 @@ router.post('/:vendorId/ratings', VerifyToken, addRating);
 router.get('/:vendorId/ratings',VerifyToken, getRatings);
 
 // Initialisation du paiement
-// Dans la route d'initialisation du paiement, modifiez les liens de succès/échec
 router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
     try {
         const { amount } = req.body;
@@ -101,8 +100,8 @@ router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
             app_token: process.env.FLOUCI_APP_TOKEN,
             app_secret: process.env.FLOUCI_APP_SECRET,
             amount: Number(amount),
-            success_link: `https://dumum-tergo-backend.onrender.com/payment/success?developer_tracking_id=${req.vendorId}`,
-            fail_link: 'https://dumum-tergo-backend.onrender.com/payment/fail',
+            success_link: `https://dumum-tergo-backend.onrender.com/api/vendor/payment/success?developer_tracking_id=${req.vendorId}`,
+            fail_link: 'https://dumum-tergo-backend.onrender.com/api/vendor/payment/fail',
             developer_tracking_id: req.vendorId,
             session_timeout_secs: 1200,
             accept_card: true,
@@ -120,9 +119,11 @@ router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
     }
 });
 
-// Modifiez la route de succès pour gérer la redirection vers l'app mobile
+// Gestion du succès du paiement
 router.get('/payment/success', async (req, res) => {
     try {
+        console.log("Query Params:", req.query); // Vérifier les paramètres reçus
+
         const { developer_tracking_id, payment_id } = req.query;
         if (!developer_tracking_id || !payment_id) {
             return res.status(400).json({ success: false, msg: 'Paramètres manquants.' });
@@ -133,6 +134,8 @@ router.get('/payment/success', async (req, res) => {
             return res.status(404).json({ success: false, msg: 'Vendeur non trouvé.' });
         }
 
+        console.log("Vendeur trouvé:", vendor);
+
         // Vérification du paiement avec payment_id reçu
         const { data } = await axios.get(`https://developers.flouci.com/api/verify_payment/${payment_id}`, {
             headers: {
@@ -142,31 +145,43 @@ router.get('/payment/success', async (req, res) => {
             },
         });
 
+        console.log("Réponse de Flouci:", data);
+
         if (data.success && data.result.status === 'SUCCESS') {
-            vendor.subscription = { 
-                status: 'active', 
-                expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) 
-            };
-            vendor.paymentId = payment_id;
+            vendor.subscription = { status: 'active', expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) };
+            vendor.paymentId = payment_id; // Mettre à jour l'ID de paiement
             await vendor.save();
 
-            // Redirection vers l'application mobile avec les paramètres nécessaires
-            return res.redirect(`https://dumum-tergo-backend.onrender.com/payment/success?vendorId=${developer_tracking_id}&paymentId=${payment_id}`);
-        }
+            // Envoyer une notification WebSocket
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        event: 'payment_success',
+                        vendorId: developer_tracking_id,
+                        paymentId: payment_id
+
+                    }));
+                    console.log("khedmet");
+
+                }
+            });
+
+            return res.render('success', {
+                transactionId: payment_id,
+                amount: data.result.amount,
+                date: new Date().toLocaleString()
+            });
+                    }
 
         return res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail');
     } catch (error) {
         console.error('Erreur succès paiement:', error);
-        return res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail?error=server_error');
+        return res.status(500).json({ success: false, msg: 'Erreur serveur.' });
     }
 });
 
-// Modifiez la route d'échec pour rediriger vers l'app mobile
-router.get('/payment/fail', (req, res) => {
-    const { error } = req.query;
-    const errorParam = error ? `?error=${error}` : '';
-    return res.redirect(`https://dumum-tergo-backend.onrender.com/payment/fail${errorParam}`);
-});
+// Gestion de l'échec du paiement
+router.get('/payment/fail', (req, res) => res.redirect('https://dumum-tergo-backend.onrender.com/payment/fail'));
 
 // Vérification du paiement
 router.get('/verify-payment/:payment_id', async (req, res) => {
