@@ -1,21 +1,19 @@
-<% if(typeof success !== 'undefined' && success){ %>
-    <div style="text-align: center; margin: 50px auto; max-width: 600px; padding: 30px; border-radius: 12px; background-color: #f0faf7; border-left: 6px solid #08B783; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="#08B783" style="display: block; margin: 0 auto 20px;">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-        <h2 style="color: #08B783; margin: 0 0 15px; font-size: 28px;">
-            Paiement réussi !
-        </h2>
-        <p style="color: #555; margin-bottom: 25px; font-size: 16px; line-height: 1.6;">
-            Votre paiement a été traité avec succès. Merci pour votre confiance.
-        </p>
-        <div style="background-color: #e6f7f2; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
-            <p style="margin: 5px 0; color: #333;"><strong>ID de transaction :</strong> <%= transactionId %></p>
-            <p style="margin: 5px 0; color: #333;"><strong>Montant :</strong> <%= amount %> FCFA</p>
-            <p style="margin: 5px 0; color: #333;"><strong>Date :</strong> <%= new Date().toLocaleString() %></p>
-        </div>
-        <a href="/vendor/dashboard" style="display: inline-block; background-color: #08B783; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; margin-top: 20px; transition: background-color 0.3s;">
-            Retour au tableau de bord
-        </a>
+<div style="text-align: center; margin: 50px auto; max-width: 600px; padding: 30px; border-radius: 12px; background-color: #f0faf7; border-left: 6px solid #08B783; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="#08B783" style="display: block; margin: 0 auto 20px;">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+    <h2 style="color: #08B783; margin: 0 0 15px; font-size: 28px;">
+        Paiement réussi !
+    </h2>
+    <p style="color: #555; margin-bottom: 25px; font-size: 16px; line-height: 1.6;">
+        Votre paiement a été traité avec succès. Merci pour votre confiance.
+    </p>
+    <div style="background-color: #e6f7f2; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+        <p style="margin: 5px 0; color: #333;"><strong>ID de transaction :</strong> <%= transactionId %></p>
+        <p style="margin: 5px 0; color: #333;"><strong>Montant :</strong> <%= amount %> FCFA</p>
+        <p style="margin: 5px 0; color: #333;"><strong>Date :</strong> <%= new Date().toLocaleString() %></p>
     </div>
-<% } %>
+    <a  style="display: inline-block; background-color: #08B783; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; margin-top: 20px; transition: background-color 0.3s;">
+        Retour a Demum tergo 
+    </a>
+</div>
