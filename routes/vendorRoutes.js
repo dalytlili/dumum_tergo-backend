@@ -95,6 +95,7 @@ router.post('/initiate-payment', VerifyTokenvendor, async (req, res) => {
         if (!amount || isNaN(amount) || amount <= 0) {
             return res.status(400).json({ success: false, msg: 'Montant invalide' });
         }
+        amount = Math.round(amount * 1000) / 1000;
 
         const paymentData = {
             app_token: process.env.FLOUCI_APP_TOKEN,
