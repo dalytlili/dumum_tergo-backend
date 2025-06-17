@@ -92,6 +92,6 @@ router.get('/search',VerifyToken, searchExperiences);
 router.get('/:id/like', VerifyToken, getLikes);
 router.get('/:id/comments', VerifyToken, getComments);
 router.post('/favorites/:experienceId', VerifyToken, addToFavorites);
-router.delete('/favorites/:experienceId', VerifyToken, removeFromFavorites);
+router.delete('/unfavorites/:experienceId', VerifyToken, removeFromFavorites);
 router.get('/favorites', VerifyToken, getFavorites);
 export default router;
