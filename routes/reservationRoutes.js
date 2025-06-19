@@ -3,11 +3,14 @@ import express from 'express';
 import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import { checkVendorSubscription } from '../middlewares/vendorSubscription.js';
+
 import { 
   createReservation, 
   updateReservationStatus, 
   getUserReservations, 
-  getVendorReservations 
+  getVendorReservations ,
+  cancelReservation
 } from '../controllers/reservationController.js';
 import { VerifyTokenvendor, VerifyToken } from '../middlewares/auth.js';
 import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
@@ -68,9 +71,10 @@ const upload = multer({
 // Routes pour les clients
 router.post('/', upload, VerifyToken, createReservation);
 router.get('/user', VerifyToken, getUserReservations);
-
+// Ajoutez cette ligne avec les autres routes pour utilisateur
+router.delete('/:reservationId', VerifyToken, cancelReservation);
 // Routes pour les vendeurs
-router.put('/:reservationId', VerifyTokenvendor, updateReservationStatus);
-router.get('/vendor', VerifyTokenvendor, getVendorReservations);
+router.put('/:reservationId', VerifyTokenvendor,checkVendorSubscription, updateReservationStatus);
+router.get('/vendor', VerifyTokenvendor,checkVendorSubscription, getVendorReservations);
 
 export default router;
