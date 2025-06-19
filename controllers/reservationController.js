@@ -320,4 +320,83 @@ async function checkCarAvailability(carId, startDate, endDate) {
     ]
   });
   return !!car;
-}
+};
+// Annuler une réservation (pour client)
+export const cancelReservation = async (req, res) => {
+  try {
+    const { reservationId } = req.params;
+    const { user } = req;
+
+    const reservation = await Reservation.findOne({
+      _id: reservationId,
+      user: user._id
+    }).populate('car').populate('vendor');
+
+    if (!reservation) {
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
+
+    // Vérifier que la réservation est encore en attente
+    if (reservation.status !== 'pending') {
+      return res.status(400).json({ 
+        error: 'Vous ne pouvez annuler que les réservations en attente' 
+      });
+    }
+
+    // Mettre à jour le statut
+    reservation.status = 'cancelled';
+    await reservation.save();
+
+    // Envoyer une notification au vendeur
+    await sendNotification(
+      reservation.vendor._id.toString(),
+      {
+        type: 'reservation_cancelled',
+        recipientType: 'Vendor',
+        data: {
+          reservationId: reservation._id,
+          car: {
+            _id: reservation.car._id,
+            brand: reservation.car.brand,
+            model: reservation.car.model
+          },
+          user: {
+            _id: user._id,
+            name: `${user.name}`,
+            image: `${user.image}`,
+          },
+          startDate: reservation.startDate,
+          endDate: reservation.endDate,
+          totalPrice: reservation.totalPrice
+        }
+      }
+    );
+
+    // Envoyer une notification à l'utilisateur
+    await sendNotification(
+      user._id.toString(),
+      {
+        type: 'reservation_cancelled',
+        recipientType: 'User',
+        data: {
+          reservationId: reservation._id,
+          car: {
+            _id: reservation.car._id,
+            brand: reservation.car.brand,
+            model: reservation.car.model
+          },
+          startDate: reservation.startDate,
+          endDate: reservation.endDate,
+          totalPrice: reservation.totalPrice
+        }
+      }
+    );
+
+    res.json({
+      message: 'Réservation annulée avec succès',
+      reservation
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
