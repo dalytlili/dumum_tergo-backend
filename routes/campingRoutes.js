@@ -20,6 +20,8 @@ import {
   getBannedItems
 } from '../controllers/campingController.js';
 import { VerifyTokenvendor, VerifyToken, verifyAdmin } from '../middlewares/auth.js';
+import { checkVendorSubscription } from '../middlewares/vendorSubscription.js';
+
 import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
@@ -78,12 +80,12 @@ const storage = new CloudinaryStorage({
   };
 
 // Routes pour les vendeurs
-router.post('/items',upload.array('images', 5),validateFileSize,  VerifyTokenvendor, addCampingItem);
-router.put('/items/:itemId',upload.array('images', 5), VerifyTokenvendor, updateCampingItem);
+router.post('/items',upload.array('images', 5),validateFileSize,  VerifyTokenvendor,checkVendorSubscription, addCampingItem);
+router.put('/items/:itemId',upload.array('images', 5), VerifyTokenvendor,checkVendorSubscription, updateCampingItem);
 router.delete('/items/:itemId', VerifyTokenvendor, deleteCampingItem);
-router.get('/vendor/items', VerifyTokenvendor, getVendorItems);
-router.put('/rentals/:rentalId/confirm', VerifyTokenvendor, confirmRental);
-router.get('/items/:itemId', VerifyTokenvendor, getCampingItemDetailsForVendor); // Nouvelle route
+router.get('/vendor/items', VerifyTokenvendor,checkVendorSubscription, getVendorItems);
+router.put('/rentals/:rentalId/confirm', VerifyTokenvendor,checkVendorSubscription, confirmRental);
+router.get('/items/:itemId', VerifyTokenvendor,checkVendorSubscription, getCampingItemDetailsForVendor); // Nouvelle route
 
 // Routes pour les utilisateurs
 router.get('/items', VerifyToken, getAllCampingItems);
