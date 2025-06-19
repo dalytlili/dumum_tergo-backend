@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import { checkVendorSubscription } from '../middlewares/vendorSubscription.js';
 
 import { 
   createCar, 
@@ -70,7 +71,7 @@ const storage = new CloudinaryStorage({
     next();
   };
 // Routes pour les vendeurs
-router.post('/',upload.array('images', 10),validateFileSize, VerifyTokenvendor, createCar);
+router.post('/',upload.array('images', 10),validateFileSize,checkVendorSubscription, VerifyTokenvendor, createCar);
 router.get('/vendor', VerifyTokenvendor, getVendorCars);
 router.get('/searchLocations', searchLocations);
 router.delete('/cars/:id', VerifyTokenvendor, deleteCar);
