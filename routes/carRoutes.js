@@ -71,7 +71,7 @@ const storage = new CloudinaryStorage({
     next();
   };
 // Routes pour les vendeurs
-router.post('/',upload.array('images', 10),validateFileSize,checkVendorSubscription, VerifyTokenvendor, createCar);
+router.post('/',upload.array('images', 10),validateFileSize, VerifyTokenvendor,checkVendorSubscription, createCar);
 router.get('/vendor', VerifyTokenvendor, getVendorCars);
 router.get('/searchLocations', searchLocations);
 router.delete('/cars/:id', VerifyTokenvendor, deleteCar);
