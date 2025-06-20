@@ -279,11 +279,24 @@ export const addComment = async (req, res) => {
         const notificationResult = await sendNotification(experience.user._id.toString(), {
           type: 'experience_comment',
           recipientType: 'User',
-          data: {
+            data: {
             experienceId: experience._id,
             commentedBy: req.user._id,
             commentedByUsername: req.user.name,
-            commentText: text
+            commentText: text,
+
+            experience: {
+              _id: experience._id,
+              title: experience.title,
+              description: experience.description,
+              images: experience.images,
+              createdAt: experience.createdAt,
+              user: {
+                _id: experience.user._id,
+                name: experience.user.name,
+                image: experience.user.image
+              }
+            },
           },
           message: `${req.user.name} a commenté votre expérience`
         });
