@@ -147,15 +147,26 @@ if (!experience.user._id.equals(req.user._id)) {
     const notificationResult = await sendNotification(experience.user._id.toString(), {
       type: 'experience_like',
       recipientType: 'User', // Doit correspondre exactement à l'enum
-     data: {
+    data: {
         experienceId: experience._id,
         likedBy: {
           _id: req.user._id,
           name: req.user.name,
           image: req.user.image // Ajoutez l'image de l'utilisateur
         },
-        experienceTitle: experience.title // Vous pouvez ajouter d'autres infos sur l'expérience si besoin
-
+        experienceTitle: experience.title, // Vous pouvez ajouter d'autres infos sur l'expérience si besoin
+        experience: {
+          _id: experience._id,
+          title: experience.title,
+          description: experience.description,
+          images: experience.images,
+          createdAt: experience.createdAt,
+          user: {
+            _id: experience.user._id,
+            name: experience.user.name,
+            image: experience.user.image
+          }
+        },
       },
       message: `${req.user.name} a aimé votre expérience`
     });
