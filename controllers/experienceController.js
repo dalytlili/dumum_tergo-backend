@@ -148,8 +148,13 @@ if (!experience.user._id.equals(req.user._id)) {
       recipientType: 'User', // Doit correspondre exactement à l'enum
       data: {
         experienceId: experience._id,
-        likedBy: req.user._id,
-        likedByUsername: req.user.name
+        likedBy: {
+          _id: req.user._id,
+          name: req.user.name,
+          image: req.user.image // Ajoutez l'image de l'utilisateur
+        },
+        experienceTitle: experience.title // Vous pouvez ajouter d'autres infos sur l'expérience si besoin
+
       },
       message: `${req.user.name} a aimé votre expérience`
     });
