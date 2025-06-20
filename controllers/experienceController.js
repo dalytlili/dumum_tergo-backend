@@ -279,11 +279,12 @@ export const addComment = async (req, res) => {
         const notificationResult = await sendNotification(experience.user._id.toString(), {
           type: 'experience_comment',
           recipientType: 'User',
-            data: {
+               data: {
             experienceId: experience._id,
-            commentedBy: req.user._id,
-            commentedByUsername: req.user.name,
-            commentText: text,
+            
+            commentedBy: {_id: req.user._id,
+              name: req.user.name,
+              image: req.user.image },// Ajoutez l'image de l'utilisateur}
 
             experience: {
               _id: experience._id,
