@@ -17,7 +17,8 @@ import {
   updateExperienceDescription,
   addToFavorites,
   removeFromFavorites,
-  getFavorites
+  getFavorites,
+  getMonExperience
 } from '../controllers/experienceController.js';
 
 import cloudinary from '../config/cloudinaryConfig.js'; // Chemin vers votre config
@@ -85,6 +86,7 @@ router.put('/:id', VerifyToken, updateExperienceDescription);
 router.get('/user/:userId',VerifyToken, getUserExperiences);
 router.put('/:id/like', VerifyToken, likeExperience);
 router.put('/:id/unlike', VerifyToken, unlikeExperience);
+router.get('/:id', VerifyToken, getMonExperience);
 
 router.post('/:id/comment', VerifyToken, addComment);
 router.get('/search',VerifyToken, searchExperiences);
