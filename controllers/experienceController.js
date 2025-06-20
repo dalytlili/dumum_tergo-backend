@@ -183,7 +183,7 @@ if (!experience.user._id.equals(req.user._id)) {
 };
 export const unlikeExperience = async (req, res) => {
   try {
-    const experience = await Experience.findById(req.params.id);
+    const experience = await Experience.findById(req.params.id).populate('user', '_id name');
 
     if (!experience) {
       return res.status(404).json({
@@ -205,6 +205,26 @@ export const unlikeExperience = async (req, res) => {
     );
 
     await experience.save();
+
+    // Supprimer la notification de like si l'auteur est différent de l'utilisateur actuel
+    if (!experience.user._id.equals(req.user._id)) {
+      try {
+        console.log('Attempting to delete like notification for:', experience.user._id);
+        
+        // Vous aurez besoin d'une fonction pour trouver et supprimer la notification spécifique
+        const deleteResult = await Notification.deleteOne({
+          'recipient': experience.user._id,
+          'type': 'experience_like',
+          'data.experienceId': experience._id,
+          'data.likedBy._id': req.user._id
+        });
+
+        console.log('Notification delete result:', deleteResult);
+      } catch (error) {
+        console.error('Error deleting notification:', error);
+        // Ne pas bloquer l'unlike à cause d'une erreur de suppression de notification
+      }
+    }
 
     res.json({
       success: true,
