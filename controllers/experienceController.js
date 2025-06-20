@@ -1,6 +1,7 @@
 import Experience from '../models/experienceModel.js';
 import User from '../models/userModel.js';
 import {  sendNotification } from '../config/wsServer.js';
+import Notification from '../models/Notification.js'; // Ajoutez cette ligne en haut du fichier
 
 // Créer une nouvelle expérience
 export const createExperience = async (req, res) => {
