@@ -78,22 +78,25 @@ const storage = new CloudinaryStorage({
     next();
   };
   
-  router.post('/', VerifyToken, upload.array('images', 5), createExperience);
-  // Avant : router.post('/',VerifyToken, createExperience);
-router.delete('/:id', VerifyToken, deleteExperience);
-router.get('/', VerifyToken, getExperiences);
-router.put('/:id', VerifyToken, updateExperienceDescription);
-router.get('/user/:userId',VerifyToken, getUserExperiences);
-router.put('/:id/like', VerifyToken, likeExperience);
-router.put('/:id/unlike', VerifyToken, unlikeExperience);
-router.get('/:id', VerifyToken, getMonExperience);
+router.post('/', VerifyToken, upload.array('images', 5), createExperience);
 
-router.post('/:id/comment', VerifyToken, addComment);
-router.get('/search',VerifyToken, searchExperiences);
-// Ajoutez ces deux nouvelles routes avant l'export
-router.get('/:id/like', VerifyToken, getLikes);
-router.get('/:id/comments', VerifyToken, getComments);
+// Routes spécifiques AVANT celles avec :id
+router.get('/search', VerifyToken, searchExperiences);
+router.get('/favorites', VerifyToken, getFavorites);
 router.post('/favorites/:experienceId', VerifyToken, addToFavorites);
 router.delete('/unfavorites/:experienceId', VerifyToken, removeFromFavorites);
-router.get('/favorites', VerifyToken, getFavorites);
+router.get('/user/:userId', VerifyToken, getUserExperiences);
+router.get('/:id/like', VerifyToken, getLikes);
+router.get('/:id/comments', VerifyToken, getComments);
+router.put('/:id/like', VerifyToken, likeExperience);
+router.put('/:id/unlike', VerifyToken, unlikeExperience);
+router.post('/:id/comment', VerifyToken, addComment);
+
+// Route avec ID en dernier
+router.get('/:id', VerifyToken, getMonExperience);
+router.put('/:id', VerifyToken, updateExperienceDescription);
+router.delete('/:id', VerifyToken, deleteExperience);
+
+router.get('/', VerifyToken, getExperiences);
+
 export default router;
