@@ -650,3 +650,34 @@ export const getFavorites = async (req, res) => {
     });
   }
 };
+export const getMonExperience = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // Trouver l'expérience et vérifier qu'elle appartient à l'utilisateur
+    const experience = await Experience.findOne({
+      _id: id,
+      user: userId
+    })
+    .populate('user', 'name image')
+    .populate('comments.user', 'name image');
+
+    if (!experience) {
+      return res.status(404).json({
+        success: false,
+        message: "Expérience non trouvée ou vous n'avez pas l'autorisation d'y accéder"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: experience
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
