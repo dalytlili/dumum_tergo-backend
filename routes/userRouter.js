@@ -139,7 +139,7 @@ router.get('/logout-admin', verifyAdmin, logoutAdmin);
 router.get('/profile-admin', verifyAdmin, adminProfile);
 router.post('/update-profile-admin', verifyAdmin, upload.single('image'), updateProfileValidator, updateProfileAdmin);
 router.get('/all-user', verifyAdmin, getalluser);
-router.get('/user/:id', verifyAdmin, getUserById);
+router.get('/get-user-admin/:id', verifyAdmin, getUserById);
 
 router.put('/promote-to-admin/:userId', verifyAdmin, promoteToAdmin);
 router.patch('/:userId/ban', verifyAdmin, banUser);
