@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { initWebSocketServer } from './config/wsServer.js';
+import complaintRoutes from './routes/complaintRoutes.js';
 
 import { notFoundError, errorHandler } from './middlewares/error-handler.js';
 import userRoute from './routes/userRouter.js';
@@ -81,6 +82,7 @@ app.use('/', authRoute);
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/sortiecamping', sortiecampingRoutes);
 app.use('/api/experiences', experienceRoutes);
+app.use('/api', complaintRoutes); // ou l'URL de base que vous utilisez
 
 // Page de paiement
 app.get('/payment/success', (req, res) => res.render('success'));
