@@ -62,6 +62,7 @@ const storage = new CloudinaryStorage({
   };
 router.post("/",upload.array('images', 10), verifyAdmin, createCampingEvent);
 router.get("/geteventadmin", verifyAdmin, getCampingEvents);
+router.get('/evenementadmin/:eventId', verifyAdmin, getEventDetails);
 
 router.get("/", VerifyToken, getCampingEvents);
 router.post('/:eventId/participer', VerifyToken, participerEvenement);
