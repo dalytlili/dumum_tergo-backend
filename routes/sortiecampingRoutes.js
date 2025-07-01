@@ -7,7 +7,8 @@ import {
   getCampingEvents,
   participerEvenement,
   getEventDetails,
-  annulerParticipationEvenement
+  annulerParticipationEvenement,
+  deleteCampingEvent
 } from "../controllers/sortiecampingController.js";
 import { VerifyTokenvendor, VerifyToken, verifyAdmin} from '../middlewares/auth.js';
 import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
@@ -63,6 +64,7 @@ const storage = new CloudinaryStorage({
 router.post("/",upload.array('images', 10), verifyAdmin, createCampingEvent);
 router.get("/geteventadmin", verifyAdmin, getCampingEvents);
 router.get('/evenementadmin/:eventId', verifyAdmin, getEventDetails);
+router.delete('/supremmer/:eventId', verifyAdmin, deleteCampingEvent);
 
 router.get("/", VerifyToken, getCampingEvents);
 router.post('/:eventId/participer', VerifyToken, participerEvenement);
