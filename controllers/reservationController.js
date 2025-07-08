@@ -296,7 +296,7 @@ export const getVendorReservations = async (req, res) => {
     const { vendor } = req;
     const reservations = await Reservation.find({ vendor: req.vendorId })
       .populate('car', 'brand model images registrationNumber')
-      .populate('user', 'name image');
+      .populate('user', 'name image email mobile');
     res.json(reservations);
   } catch (error) {
     res.status(400).json({ error: error.message });
