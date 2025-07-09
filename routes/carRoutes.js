@@ -14,7 +14,8 @@ import {
   addLocation,
   banCar,
   unbanCar,
-  getCarByVendor
+  getCarByVendor,
+  getCarStatistics
 } from '../controllers/carController.js';
 import { VerifyTokenvendor, VerifyToken, verifyAdmin} from '../middlewares/auth.js';
 import { CloudinaryStorage } from 'multer-storage-cloudinary'; // Import manquant
@@ -78,6 +79,7 @@ router.delete('/cars/:id', VerifyTokenvendor, deleteCar);
 // Route publique pour la recherche
 router.get('/search',searchAvailableCars);
 router.post('/add', addLocation); // 👉 Route pour ajouter une location
+router.get('/getCarStatistics', getCarStatistics); // 👉 Route pour ajouter une location
 
 // Ajouter ces nouvelles routes pour l'admin
 router.get('/admin/vendor/:vendorId/cars', verifyAdmin, getCarByVendor);
