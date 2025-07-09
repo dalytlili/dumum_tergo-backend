@@ -15,6 +15,8 @@ import OtpReset from '../models/OtpReset.js';
 import twilio from 'twilio';
 import mongoose from 'mongoose';
 import Experience from '../models/experienceModel.js';
+import Stats from '../models/Stats.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -378,6 +380,7 @@ const userRegister = async (req, res) => {
 
         // Save the user to the database
         const userData = await newUser.save();
+        await updateUserStats();
 
         // Prepare email content for verification - Personnalisé pour Dumum Tergo
         const subject = 'Vérification de votre email - Dumum Tergo';
@@ -423,6 +426,60 @@ const userRegister = async (req, res) => {
     }
 };
 
+const updateUserStats = async () => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+        
+        let stats = await Stats.findOne();
+        if (!stats) {
+            stats = new Stats();
+        }
+        
+        stats.totalUsers = totalUsers;
+        
+        // Mise à jour mensuelle
+        const monthIndex = stats.monthlyUsers.findIndex(m => m.month === currentMonth);
+        if (monthIndex >= 0) {
+            stats.monthlyUsers[monthIndex].count++;
+        } else {
+            stats.monthlyUsers.push({ month: currentMonth, count: 1 });
+        }
+        
+        stats.lastUpdated = new Date();
+        await stats.save();
+    } catch (error) {
+        console.error('Erreur mise à jour stats:', error);
+    }
+};
+// Nouvelle fonction pour récupérer les stats
+export const getStats = async (req, res) => {
+    try {
+        const stats = await Stats.findOne();
+        
+        if (!stats) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    totalUsers: 0,
+                    monthlyUsers: [],
+                    dailyLogins: []
+                }
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            data: stats
+        });
+        
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error.message
+        });
+    }
+};
 // Function to handle email verification
 const mailVerification = async (req, res) => {
     try {
@@ -684,6 +741,8 @@ const loginUser = async (req, res) => {
         const refreshToken = await generateRefreshToken({ user: userData });
         console.log('Access Token:', accessToken);
         console.log('Refresh Token:', refreshToken);
+        await updateLoginStats();
+
         return res.status(200).json({
             success: true,
             msg: 'Login Successfully!!',
@@ -703,7 +762,34 @@ const loginUser = async (req, res) => {
     }
 };
 
-
+const updateLoginStats = async () => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let stats = await Stats.findOne();
+        if (!stats) {
+            stats = new Stats();
+        }
+        
+        const dayIndex = stats.dailyLogins.findIndex(d => 
+            d.date.getTime() === today.getTime()
+        );
+        
+        if (dayIndex >= 0) {
+            stats.dailyLogins[dayIndex].count++;
+        } else {
+            stats.dailyLogins.push({ 
+                date: today, 
+                count: 1 
+            });
+        }
+        
+        await stats.save();
+    } catch (error) {
+        console.error('Erreur stats connexion:', error);
+    }
+};
 // Function to get user profile
 const userProfile = async (req, res) => {
     try {
