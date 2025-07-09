@@ -1,20 +1,29 @@
 import express from 'express';
-import { 
-    createComplaint, 
-    getAllComplaints, 
-    updateComplaintStatus, 
-    getUserComplaints 
+import {
+    createComplaint,
+    getComplaints,
+    updateComplaintStatus,
+    addResponse,
+    createComplaintVendor,
+    getVendorComplaints,
+    getUserComplaints
 } from '../controllers/complaintController.js';
-import { VerifyToken, verifyAdmin } from '../middlewares/auth.js';
+import { VerifyTokenvendor, VerifyToken, verifyAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Routes pour les utilisateurs/vendeurs
-router.post('/complaints', VerifyToken, createComplaint);
-router.get('/complaints/my-complaints', VerifyToken, getUserComplaints);
+// Routes accessibles aux utilisateurs et vendeurs
+router.post('/', VerifyToken, createComplaint);
+router.get('/user-complaints', VerifyToken, getUserComplaints);
+router.post('/vendeur', VerifyTokenvendor, createComplaintVendor);
+router.get('/vendeur', VerifyTokenvendor, getVendorComplaints);
 
-// Routes pour l'admin
-router.get('/admin/complaints', verifyAdmin, getAllComplaints);
-router.put('/admin/complaints/:complaintId', verifyAdmin, updateComplaintStatus);
+router.get('/', verifyAdmin, getComplaints);
+
+// Route pour ajouter des réponses
+router.post('/:id/responses', verifyAdmin, addResponse);
+
+// Routes admin seulement
+router.patch('/:id/status', verifyAdmin,  updateComplaintStatus);
 
 export default router;
