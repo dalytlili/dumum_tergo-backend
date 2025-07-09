@@ -21,7 +21,8 @@ import {
     changePassword,
     getUserById,
     followUser,
-    searchUsers
+    searchUsers,
+    getStats
 
 } from '../controllers/userController.js';
 import {
@@ -129,6 +130,7 @@ router.get('/search', VerifyToken, searchUsers);
 router.post('/verify-token', VerifyToken, (req, res) => {
   res.status(200).json({ success: true, user: req.user });
 });
+router.get('/stats', getStats);
 
 // Routes
 router.get('/user/:id', VerifyToken, getUserById);
