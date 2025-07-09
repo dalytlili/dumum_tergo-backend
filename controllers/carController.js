@@ -449,4 +449,61 @@ export const getCarByVendor = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};// Statistiques générales sur les voitures
+export const getCarStatistics = async (req, res) => {
+  try {
+    // 1. Nombre total de voitures
+    const totalCars = await Car.countDocuments();
+    
+    // 2. Nombre de voitures disponibles vs non disponibles
+    const availableCars = await Car.countDocuments({ isAvailable: true });
+    const unavailableCars = await Car.countDocuments({ isAvailable: false });
+    
+    // 3. Nombre de voitures bannies
+    const bannedCars = await Car.countDocuments({ isBanned: true });
+    
+    // 4. Répartition par type de transmission
+    const transmissionStats = await Car.aggregate([
+      { $group: { _id: "$transmission", count: { $sum: 1 } } }
+    ]);
+    
+    // 5. Répartition par politique de kilométrage
+    const mileagePolicyStats = await Car.aggregate([
+      { $group: { _id: "$mileagePolicy", count: { $sum: 1 } } }
+    ]);
+    
+    // 6. Prix moyen par jour
+    const avgPriceResult = await Car.aggregate([
+      { $group: { _id: null, avgPrice: { $avg: "$pricePerDay" } } }
+    ]);
+    const avgPrice = avgPriceResult[0]?.avgPrice || 0;
+    
+    // 7. Top 5 marques les plus populaires
+    const topBrands = await Car.aggregate([
+      { $group: { _id: "$brand", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+    
+    res.json({
+      success: true,
+      data: {
+        totalCars,
+        availability: {
+          available: availableCars,
+          unavailable: unavailableCars
+        },
+        bannedCars,
+        transmissionStats,
+        mileagePolicyStats,
+        avgPrice: parseFloat(avgPrice.toFixed(2)),
+        topBrands
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 };
