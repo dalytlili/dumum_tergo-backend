@@ -14,7 +14,8 @@ import {
     logout,
     userProfile,
     verifyOtpAndUpdateMobile,
-    updateProfile
+    updateProfile,
+    getVendorStats
 } from '../controllers/vendorController.js';
 import { WebSocketServer } from 'ws';
 import { addRating, getRatings } from '../controllers/ratingController.js';
@@ -83,6 +84,7 @@ router.get('/logout', VerifyTokenvendor, logout)
 router.get('/profile', VerifyTokenvendor, userProfile);
 router.post('/update-profile', upload.single('image'),validateFileSize, VerifyTokenvendor, updateProfile);
 router.post('/verify-otp-update-mobile',VerifyTokenvendor, verifyOtpAndUpdateMobile);
+router.get('/stats', getVendorStats);
 
 // Routes pour les notations
 router.post('/:vendorId/ratings', VerifyToken, addRating);
