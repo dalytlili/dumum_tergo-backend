@@ -3,7 +3,10 @@ import { sendOtp } from '../helpers/twilio.js';
 import randomstring from 'randomstring';
 import jwt from 'jsonwebtoken';
 import Blacklist from '../models/blacklist.js';
+// At the top of your file with other imports
+import StatsVendor from '../models/Atat-vendeur.js';
 
+// Then remove the duplicate definition at the bottom of the file
 // Fonction pour demander un OTP
 export const requestOtp = async (req, res) => {
     try {
@@ -15,7 +18,9 @@ export const requestOtp = async (req, res) => {
         if (!vendor) {
             // Créer un nouveau vendeur si le numéro de mobile n'existe pas
             vendor = new Vendor({ mobile });
-            await vendor.save(); // Sauvegarder le nouveau vendeur
+            await vendor.save();
+            await updateVendorStats('registration'); // Ajoutez cette ligne
+            // Sauvegarder le nouveau vendeur
         }
         if (vendor.is_banned !== undefined && vendor.is_banned === true) {
             return res.status(403).json({
@@ -84,7 +89,7 @@ export const verifyOtpAndLogin = async (req, res) => {
             process.env.ACCESS_TOKEN_SECRET,
            // { expiresIn: '2h' } // Durée de validité du token
         );
-
+        await updateVendorStats('login');
         return res.status(200).json({
             success: true,
             msg: 'Connexion réussie !',
@@ -102,6 +107,88 @@ export const verifyOtpAndLogin = async (req, res) => {
         });
     }
 };
+export const getStats = async (req, res) => {
+    try {
+        const stats = await Stats.findOne();
+        
+        if (!stats) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    totalUsers: 0,
+                    monthlyUsers: [],
+                    dailyLogins: []
+                }
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            data: stats
+        });
+        
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error.message
+        });
+    }
+};
+const updateVendorStats = async (action) => {
+    try {
+        const now = new Date();
+        const monthYear = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+        
+        let stats = await StatsVendor.findOne();
+        if (!stats) {
+            stats = new StatsVendor();
+        }
+
+        switch(action) {
+            case 'login':
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const dayIndex = stats.dailyLogins.findIndex(d => 
+                    d.date.getTime() === today.getTime()
+                );
+                
+                if (dayIndex >= 0) {
+                    stats.dailyLogins[dayIndex].count++;
+                } else {
+                    stats.dailyLogins.push({ 
+                        date: today, 
+                        count: 1 
+                    });
+                }
+                break;
+
+            case 'registration':
+                stats.totalVendors = await Vendor.countDocuments();
+                
+                const monthIndex = stats.monthlyVendors.findIndex(m => m.month === monthYear);
+                if (monthIndex >= 0) {
+                    stats.monthlyVendors[monthIndex].count++;
+                } else {
+                    stats.monthlyVendors.push({ 
+                        month: monthYear, 
+                        count: 1 
+                    });
+                }
+                break;
+
+            case 'profileCompletion':
+                stats.profileCompletions++;
+                break;
+        }
+
+        stats.lastUpdated = now;
+        await stats.save();
+    } catch (error) {
+        console.error('Erreur stats vendeurs:', error);
+    }
+};
+
 export const logout = async(req,res)=>{
     try{
 
@@ -153,12 +240,12 @@ export const completeProfile = async (req, res) => {
 
         // Mettre à jour l'image si elle est fournie
         if (req.file) {
-            vendor.image = `/${req.file.filename}`;
+            vendor.image = `/images/${req.file.filename}`;
         }
 
         // Sauvegarder les modifications
         await vendor.save();
-
+        await updateVendorStats('profileCompletion');
         return res.status(200).json({
             success: true,
             msg: 'Profil complété avec succès.',
@@ -181,6 +268,29 @@ export const completeProfile = async (req, res) => {
         });
     }
 };
+export const getVendorStats = async (req, res) => {
+    try {
+        const stats = await StatsVendor.findOne();
+        
+        return res.status(200).json({
+            success: true,
+            data: stats || {
+                totalVendors: 0,
+                activeVendors: 0,
+                monthlyVendors: [],
+                dailyLogins: [],
+                profileCompletions: 0
+            }
+        });
+        
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error.message
+        });
+    }
+};
+
 export const updateProfile = async (req, res) => {
     try {
         const vendorId = req.vendorId; // Récupérer l'ID du vendeur à partir du token
