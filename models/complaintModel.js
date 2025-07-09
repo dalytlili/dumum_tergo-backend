@@ -1,55 +1,45 @@
 import mongoose from 'mongoose';
 
 const complaintSchema = new mongoose.Schema({
-    complainant: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: 'complainantModel'
+        ref: 'User',
+        required: true
     },
-    complainantModel: {
-        type: String,
-        required: true,
-        enum: ['User', 'Vendor']
-    },
-    accused: {
+    vendor: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: 'accusedModel'
+        ref: 'Vendor',
+        required: true
     },
-    accusedModel: {
+    complaintType: {
         type: String,
         required: true,
-        enum: ['User', 'Vendor']
+        enum: ['user_to_vendor', 'vendor_to_user'],
+        index: true
     },
-    subject: {
+    title: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        maxlength: 100
     },
     description: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        maxlength: 1000
     },
     status: {
         type: String,
-        enum: ['pending', 'in_progress', 'resolved', 'rejected'],
-        default: 'pending'
-    },
-    adminResponse: {
-        type: String,
-        trim: true
+        enum: ['pending', 'in_review', 'resolved', 'rejected'],
+        default: 'pending',
+        index: true
     },
     createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
         type: Date,
         default: Date.now
     }
 });
 
-const Complaint = mongoose.model('Complaint', complaintSchema);
-
+const Complaint = mongoose.models.Complaint || mongoose.model('Complaint', complaintSchema);
 export default Complaint;
