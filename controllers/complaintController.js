@@ -1,5 +1,5 @@
 import Complaint from '../models/complaintModel.js';
-import User from '../models/usermodel.js';
+import User from '../models/userModel.js';
 import Vendor from '../models/vendor.js';
 export const createComplaint = async (req, res) => {
     try {
