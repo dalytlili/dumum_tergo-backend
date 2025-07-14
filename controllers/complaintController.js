@@ -143,7 +143,7 @@ export const createComplaintVendor = async (req, res) => {
         const { userId, title, description } = req.body;
         
         // Récupération de l'ID du vendeur depuis le token
-        const vendorId = req.user._id; // Le token doit identifier un vendeur
+        const vendorId = req.vendorId; // Changé de req.user._id à req.vendorId
 
         if (!vendorId) {
             return res.status(401).json({
