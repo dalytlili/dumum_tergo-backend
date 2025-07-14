@@ -126,7 +126,7 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
-        // Vérification du token blacklisté
+        // Vérifie si le jeton est dans la liste noire
         const blacklistedToken = await Blacklist.findOne({ token: bearerToken });
         if (blacklistedToken) {
             return res.status(400).json({
@@ -135,15 +135,11 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
-        // Décodage du token
+        // Vérifie et décode le jeton
         const decodedData = jwt.verify(bearerToken, process.env.ACCESS_TOKEN_SECRET);
-        
-        // CORRECTION: S'assurer que req.user contient directement l'ID
-        req.user = {
-            _id: decodedData.user._id // Stocke directement l'ID de l'utilisateur
-        };
+        req.user = decodedData.user;
 
-        // Vérification de l'utilisateur
+        // Vérifie si le token a expiré dans la base de données
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(401).json({
@@ -152,16 +148,15 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
-        // Vérification de l'expiration du token
         if (user.tokenExpiredAt && new Date(user.tokenExpiredAt) < new Date()) {
-            await Blacklist.create({ token: bearerToken });
+            await Blacklist.create({ token: bearerToken });  // Ajouter à la blacklist
             return res.status(401).json({
                 success: false,
                 msg: 'Token has expired, please login again!'
             });
         }
 
-        next();
+        next(); // Si tout va bien, continue
     } catch (error) {
         console.error('Error verifying token:', error);
         return res.status(401).json({
@@ -196,12 +191,7 @@ const VerifyTokenvendor = async (req, res, next) => {
 
         // Vérifier et décoder le token
         const decoded = jwt.verify(tokenWithoutBearer, process.env.ACCESS_TOKEN_SECRET);
-        
-        // Stocker les informations de manière cohérente
-        req.user = {
-            _id: decoded.vendorId, // Maintenant accessible via req.user._id
-            role: 'vendor'
-        };
+        req.vendorId = decoded.vendorId;
 
         next();
     } catch (err) {
