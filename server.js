@@ -82,7 +82,7 @@ app.use('/', authRoute);
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/sortiecamping', sortiecampingRoutes);
 app.use('/api/experiences', experienceRoutes);
-app.use('/api', complaintRoutes); // ou l'URL de base que vous utilisez
+app.use('/api/complaints', complaintRoutes);
 
 // Page de paiement
 app.get('/payment/success', (req, res) => res.render('success'));
