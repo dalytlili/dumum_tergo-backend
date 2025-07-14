@@ -65,7 +65,7 @@ export const createComplaint = async (req, res) => {
 
 export const getVendorComplaints = async (req, res) => {
     try {
-        const vendorId = req.user._id;
+        const vendorId = req.vendorId; // Changé de req.user._id à req.vendorId
         
   
 
