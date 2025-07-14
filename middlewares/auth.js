@@ -126,7 +126,7 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
-        // Vérifie si le jeton est dans la liste noire
+        // Vérification du token blacklisté
         const blacklistedToken = await Blacklist.findOne({ token: bearerToken });
         if (blacklistedToken) {
             return res.status(400).json({
@@ -135,11 +135,15 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
-        // Vérifie et décode le jeton
+        // Décodage du token
         const decodedData = jwt.verify(bearerToken, process.env.ACCESS_TOKEN_SECRET);
-        req.user = decodedData.user;
+        
+        // CORRECTION: S'assurer que req.user contient directement l'ID
+        req.user = {
+            _id: decodedData.user._id // Stocke directement l'ID de l'utilisateur
+        };
 
-        // Vérifie si le token a expiré dans la base de données
+        // Vérification de l'utilisateur
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(401).json({
@@ -148,15 +152,16 @@ const VerifyToken = async (req, res, next) => {
             });
         }
 
+        // Vérification de l'expiration du token
         if (user.tokenExpiredAt && new Date(user.tokenExpiredAt) < new Date()) {
-            await Blacklist.create({ token: bearerToken });  // Ajouter à la blacklist
+            await Blacklist.create({ token: bearerToken });
             return res.status(401).json({
                 success: false,
                 msg: 'Token has expired, please login again!'
             });
         }
 
-        next(); // Si tout va bien, continue
+        next();
     } catch (error) {
         console.error('Error verifying token:', error);
         return res.status(401).json({
@@ -191,7 +196,12 @@ const VerifyTokenvendor = async (req, res, next) => {
 
         // Vérifier et décoder le token
         const decoded = jwt.verify(tokenWithoutBearer, process.env.ACCESS_TOKEN_SECRET);
-        req.vendorId = decoded.vendorId;
+        
+        // Stocker les informations de manière cohérente
+        req.user = {
+            _id: decoded.vendorId, // Maintenant accessible via req.user._id
+            role: 'vendor'
+        };
 
         next();
     } catch (err) {
